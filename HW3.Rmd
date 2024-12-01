@@ -1,0 +1,1814 @@
+---
+title: "HW3"
+author: "Umer Farooq"
+date: "2024-11-30"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## **Problem 1-Transportation Safety:**
+
+**Scenario:** You are a data analyst at a transportation safety organization. Your task is to analyze the relationship between the speed of cars and their stopping distance using the built-in R dataset cars. This analysis will help in understanding how speed affects the stopping distance, which is crucial for improving road safety regulations.
+
+**Tasks:** Using the cars dataset in R, perform the following steps:
+
+**Data Visualization:**
+
+* Create a scatter plot of stopping distance (dist) as a function of speed (speed).
+* Add a regression line to the plot to visually assess the relationship.
+
+**Build a Linear Model:**
+
+* Construct a simple linear regression model where stopping distance (dist) is the dependent variable and speed (speed) is the independent variable.
+* Summarize the model to evaluate its coefficients, R-squared value, and p-value.
+
+**Model Quality Evaluation:**
+
+* Calculate and interpret the R-squared value to assess the proportion of variance in stopping distance explained by speed.
+* Perform a residual analysis to check the assumptions of the linear regression model, including linearity, homoscedasticity, independence, and normality of residuals.
+
+**Residual Analysis:**
+
+* Plot the residuals versus fitted values to check for any patterns.
+* Create a Q-Q plot of the residuals to assess normality.
+* Perform a Shapiro-Wilk test for normality of residuals.
+* Plot a histogram of residuals to further check for normality.
+
+**Conclusion:**
+
+* Based on the model summary and residual analysis, determine whether the linear model is appropriate for this data. 
+* Discuss any potential violations of model assumptions and suggest improvements if necessary.
+
+### **Loading the Dataset:**
+
+Let's load the dataset and dispaly the first few rows of our dataset:
+
+```{r}
+data("cars")
+head(cars)
+```
+
+### **Creating the Visualization:**
+
+```{r warning=FALSE, message=FALSE}
+# Scatter plot with regression line
+library(ggplot2)
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Scatter plot of Stopping Distance vs Speed",
+       x = "Speed (mph)",
+       y = "Stopping Distance (ft)") +
+  theme_minimal()
+
+```
+
+### **Building the Model:**
+
+```{r}
+# Linear model
+model <- lm(dist ~ speed, data = cars)
+
+# Model summary
+summary(model)
+
+```
+
+### **Model Evaluation:**
+
+The linear regression model summary indicates that there is a statistically significant relationship between the speed of cars and their stopping distance, as evidenced by a very small p-value (1.49e-12) for the `speed` coefficient. The coefficient for `speed` (3.9324) suggests that for each unit increase in speed, the stopping distance increases by approximately 3.93 units. The model's R-squared value of 0.6511 indicates that about 65.11% of the variability in the stopping distance is explained by the speed of the cars, suggesting a moderately strong linear relationship. However, the remaining 34.89% of variability is due to other factors not accounted for by this model. The residual standard error of 15.38 suggests some degree of variation around the regression line. Overall, the model captures a significant portion of the variation, though further analysis may explore potential non-linear effects or additional variables to enhance predictive power.
+
+### **Residual Analysis:**
+
+```{r}
+# Residuals vs Fitted Values Plot
+plot(model$fitted.values, resid(model), 
+     main = "Residuals vs Fitted Values", 
+     xlab = "Fitted Values", 
+     ylab = "Residuals",
+     pch = 20)
+abline(h = 0, col = "red")
+
+# Q-Q Plot of residuals
+qqnorm(resid(model))
+qqline(resid(model))
+
+# Shapiro-Wilk Test for normality of residuals
+shapiro.test(resid(model))
+
+# Histogram of residuals
+hist(resid(model), breaks = 10, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     col = "lightblue")
+
+```
+
+**Q-Q Plot:** The Q-Q plot shows that the residuals deviate from the theoretical line, particularly at the tails, indicating that the residuals may not follow a perfectly normal distribution.
+
+**Residuals vs Fitted Values Plot:** The residuals appear randomly scattered around the horizontal line at zero, suggesting no clear pattern. This indicates that the assumption of linearity and homoscedasticity is reasonably met, though there may be some outliers.
+
+**Histogram of Residuals:** The histogram of residual also  shows a distribution that some what follows the normal distribution which might be a good sign for our model.
+
+### **Conclusion:**
+
+Based on the model summary and residual analysis, the linear regression model appears to capture a statistically significant relationship between the speed of cars and their stopping distance, as indicated by the p-value for the speed coefficient and a reasonably high R-squared value of 0.65. However, the model may not be fully appropriate due to potential issues observed in the residual analysis.
+
+#### **Potential Violations of Model Assumptions:**
+
+**Non-Normality of Residuals:** The Q-Q plot suggests deviations from normality at the tails, implying that the residuals are not perfectly normally distributed.
+
+**Homoscedasticity:** The residuals vs fitted values plot indicates that the residuals are spread somewhat randomly around zero, but there may be hints of heteroscedasticity (changing variance) due to a possible "fanning" pattern.
+
+**Potential Outliers:** There are a few potential outliers that deviate substantially from the fitted line, as seen in the residuals vs fitted values plot.
+
+#### **Suggested Improvements:**
+
+**Transformations:** Consider applying transformations (e.g., log or square root transformations) to the response variable dist to stabilize variance and improve normality.
+
+**Non-Linear Models:** If transformations are insufficient, exploring non-linear models or polynomial regression may better capture the relationship between speed and stopping distance.
+
+**Outlier Treatment:** Investigate and potentially remove or down-weight influential outliers to improve the model fit and ensure more robust results.
+
+***
+
+## **Problem 2-Health Policy Analyst:**
+
+As a health policy analyst for an international organization, you are tasked with analyzing data from the World Health Organization (WHO) to inform global health policies. The dataset provided (who.csv) contains crucial health indicators for various countries from the year 2008. The variables include:
+
+**Country:** Name of the country
+
+**LifeExp:** Average life expectancy for the country in years
+
+**InfantSurvival:** Proportion of those surviving to one year or more
+
+**Under5Survival:** Proportion of those surviving to five years or more
+
+**TBFree:** Proportion of the population without TB
+
+**PropMD:** Proportion of the population who are MDs
+
+**PropRN:** Proportion of the population who are RNs
+
+**PersExp:** Mean personal expenditures on healthcare in US dollars at average exchange rate
+
+**GovtExp:** Mean government expenditures per capita on healthcare, US dollars at average exchange rate
+
+**TotExp:** Sum of personal and government expenditures
+
+Your analysis will directly influence recommendations for improving global life expectancy and the allocation of healthcare resources.
+
+### **Question 1: Initial Assessment of Healthcare Expenditures and Life Expectancy:**
+
+**Task:** Create a scatterplot of LifeExp vs. TotExp to visualize the relationship between healthcare expenditures and life expectancy across countries. Then, run a simple linear regression with LifeExp as the dependent variable and TotExp as the independent variable (without transforming the variables).
+
+Provide and interpret the F-statistic, R-squared value, standard error, and p-values.
+Discuss whether the assumptions of simple linear regression (linearity, independence, homoscedasticity, and normality of residuals) are met in this analysis.
+
+**Discussion:** Consider the implications of your findings for health policy. Are higher healthcare expenditures generally associated with longer life expectancy? What do the assumptions of the regression model suggest about the reliability of this relationship?
+
+#### **Loading the Dataset:**
+
+```{r warning=FALSE, message=FALSE}
+
+library(data.table)
+
+data <- fread("who.csv")
+```
+
+Let's check out the first few row of data set to confirm if it loaded properly
+
+```{r}
+head(data)
+```
+
+
+```{r}
+data <- data[,0:11]
+```
+
+
+#### **Plotting:**
+
+Everything looks good let's make out plot
+
+
+```{r warning=FALSE, message=FALSE}
+ggplot(data, mapping =  aes(x = TotExp, y = LifeExp)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Scatterplot of Life Expectancy vs Total Healthcare Expenditure",
+       x = "Total Healthcare Expenditure (TotExp)",
+       y = "Life Expectancy (LifeExp)") +
+  geom_smooth(method = "lm", se = FALSE, col = "blue")
+
+# Linear regression: LifeExp ~ TotExp
+model <- lm(LifeExp ~ TotExp, data = data)
+summary(model)
+
+# Checking model assumptions:
+# 1. Plot residuals
+par(mfrow = c(2, 2))  # For plotting multiple diagnostic plots
+plot(model)
+```
+
+
+The scatterplot and regression analysis indicate a positive relationship between healthcare expenditure and life expectancy, suggesting that higher spending is generally associated with improved health outcomes. However, the diminishing returns at higher expenditure levels and significant variability at lower spending highlight the influence of other factors, such as socioeconomic conditions and public health policies. While the analysis underscores the importance of investing in healthcare, its reliability is limited by assumptions of linearity, independence, and constant variance, and it does not establish causation. Policymakers should focus on optimizing resource allocation and addressing broader determinants of health to maximize life expectancy gains.
+
+The output provides key metrics for the linear regression model:
+
+1. **F-statistic (65.26, p < 0.001)**: The F-statistic tests whether the model explains a significant amount of variance in life expectancy compared to a null model. The very small p-value (< 0.001) indicates that the model is statistically significant.
+
+2. **R-squared (0.2577)**: This value indicates that approximately 25.8% of the variation in life expectancy is explained by total healthcare expenditure. While the relationship is statistically significant, the relatively low R-squared suggests other factors influence life expectancy.
+
+3. **Standard Error (9.371)**: The residual standard error measures the average deviation of observed values from the regression line. This value indicates that predictions of life expectancy could deviate by around 9.37 years on average.
+
+4. **P-values for coefficients**: Both the intercept and the slope coefficient (TotExp) have very small p-values (< 0.001), indicating that both are significantly different from zero and contribute to the model.
+
+#### Assumptions of Simple Linear Regression:
+
+- **Linearity**: The positive slope suggests linearity, but the scatterplot indicates possible deviations at low expenditure levels.
+- **Independence**: This assumption seems reasonable unless the data points (e.g., countries or regions) are clustered.
+- **Homoscedasticity**: Residuals should have constant variance, but this cannot be confirmed without a residuals vs. fitted values plot.
+- **Normality of Residuals**: Normality can be assessed using a Q-Q plot or a Shapiro-Wilk test, but this is not provided here.
+
+Further diagnostic plots and tests are needed to fully validate these assumptions.
+
+***
+
+### **Question 2: Transforming Variables for a Better Fit**
+
+**Task:** Recognizing potential non-linear relationships, transform the variables as follows:
+
+Raise life expectancy to the 4.6 power (LifeExp^4.6).
+Raise total expenditures to the 0.06 power (TotExp^0.06), which is nearly a logarithmic transformation.
+Create a new scatterplot with the transformed variables and re-run the simple linear regression model.
+
+Provide and interpret the F-statistic, R-squared value, standard error, and p-values for the transformed model.
+
+Compare this model to the original model (from Question 1). Which model provides a better fit, and why?
+
+**Discussion:** How do the transformations impact the interpretation of the relationship between healthcare spending and life expectancy? Why might the transformed model be more appropriate for policy recommendations?
+
+**Solution:**
+
+```{r warning=FALSE, message=FALSE}
+ #Step 1: Transform the variables
+data$LifeExp_transformed <- data$LifeExp^4.6
+data$TotExp_transformed <- data$TotExp^0.06
+
+# Step 2: Create a scatterplot with transformed variables
+ggplot(data, aes(x = TotExp_transformed, y = LifeExp_transformed)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Scatterplot of Transformed Life Expectancy vs. Transformed Total Expenditures",
+    x = "Total Expenditures (Transformed)",
+    y = "Life Expectancy (Transformed)"
+  )
+
+# Step 3: Run a linear regression model with transformed variables
+model_transformed <- lm(LifeExp_transformed ~ TotExp_transformed, data = data)
+
+# Step 4: Summary of the transformed model
+summary_transformed <- summary(model_transformed)
+```
+
+```{r}
+summary_transformed
+```
+
+All the p-values are very small which suggests that it is statistically significant. The standard error of TotExp is 22 times smaller than the coefficient meaning that there is low variability in the estimate of TotExp. Then, the R-squared is 0.729 which explains 72% of the variability of the data.
+
+```{r}
+par(mfrow = c(2, 2))  # For plotting multiple diagnostic plots
+plot(model_transformed)
+```
+
+**Residual Diagnostics:**
+
+- **Residuals vs. Fitted:** Residuals appear more randomly distributed compared to the original model, indicating an improved fit to the data.
+
+- **Normal Q-Q Plot:** The residuals are closer to the diagonal line compared to the original model, suggesting better adherence to the normality assumption.
+
+- **Scale-Location Plot:** Homoscedasticity is improved; residuals show more constant variance across fitted values.
+
+- **Histogram of Residuals:** The residuals are more symmetrically distributed, further supporting normality.
+
+**Interpretation of the Transformed Model Results**
+
+The transformed model, with $R^2 =0.7298$, explains approximately 72.98% of the variation in life expectancy, indicating a significantly improved fit compared to the original model. The F-statistic of 507.7 $(p<0.001)$ confirms that the relationship between transformed total expenditures and transformed life expectancy is highly statistically significant. The residual standard error of $90,490,000$ reflects the average deviation of the observed transformed life expectancy values from the predicted ones. The slope coefficient $(620,060,216)$ is also highly significant $(p<0.001)$, reinforcing the strong positive relationship. These results suggest that the transformed model effectively captures the diminishing return effect of healthcare expenditures on life expectancy.
+
+**Comparison to the Original Model**
+
+- **Fit:** The transformed model $(R^2 =0.7298)$ explains significantly more variation in life expectancy compared to the original model $(R^ =0.2577)$.
+
+- **Assumptions:** The transformed model better meets the assumptions of linear regression (linearity, normality of residuals, and homoscedasticity).
+
+- **Interpretation:**The transformed model captures the diminishing returns of healthcare spending on life expectancy, which aligns with real-world scenarios.
+**Discussion:** Impact of Transformations: Transforming the variables improves model fit and reduces the influence of outliers, resulting in a more reliable relationship between healthcare spending and life expectancy. Also, the diminishing return effect, reflected in the transformed model, is critical for policy recommendations.
+
+**Policy Recommendations:** The transformed model suggests that additional healthcare spending in high-spending countries yields smaller improvements in life expectancy.Thus, policymakers should prioritize increasing healthcare expenditures in low-spending countries where the return on investment is greater.
+
+***
+
+### **Question 3: Forecasting Life Expectancy Based on Transformed Expenditures**
+
+**Task:** Using the results from the transformed model in Question 2, forecast the life expectancy for countries with the following transformed total expenditures (TotExp^0.06):
+
+When TotExp^0.06 = 1.5
+When TotExp^0.06 = 2.5
+ 
+**Discussion:** Discuss the implications of these forecasts for countries with different levels of healthcare spending. What do these predictions suggest about the potential impact of increasing healthcare expenditures on life expectancy?
+
+**Solution:**
+
+
+$LifeExp = -736527910 + 620060216(TotExp)$
+
+```{r}
+TotExp = 1.5
+LifeExp = -736527910 + 620060216 * (TotExp)
+LifeExp
+```
+
+```{r}
+TotExp = 2.5
+LifeExp = -736527910 + 620060216 * (TotExp)
+LifeExp
+```
+
+
+**Reverse the Transformation:** To return to the original life expectancy scale, take the 4.6th root $(LifeExp^{1/4.6})$ of the transformed forecasts:
+
+1. When $TotExp^{0.06} = 1.5:$ 
+
+$$LifeExp=(193,562,414)^{1/4.6} ≈ 45.3\ years$$
+
+1. When $TotExp^{0.06} = 2.5:$
+
+$$LifeExp=(813,622,630)^{1/4.6} ≈ 64.8\ years$$
+
+**Discussion:** The forecasts suggest that increasing healthcare expenditures significantly improves life expectancy, particularly for lower-spending countries where baseline life expectancy is lower (e.g., increasing from ~45.3 years to ~64.8 years as TotExp^0.06 rises from 1.5 to 2.5). However, as spending increases further, the gains diminish, reflecting a plateau effect where additional expenditures yield smaller improvements. This highlights the importance of prioritizing healthcare spending in low-expenditure countries for maximum impact, while higher-spending countries should focus on optimizing efficiency to achieve better health outcomes.
+
+
+***
+
+### **Question 4: Interaction Effects in Multiple Regression:**
+
+
+**Task:** Build a multiple regression model to investigate the combined effect of the proportion of MDs and total healthcare expenditures on life expectancy. Specifically, use the model:
+
+$\text{LifeExp} = b_0 + b_1 \times \text{PropMD} + b_2 \times \text{TotExp} + b_3 \times (\text{PropMD} \times \text{TotExp})$
+
+Interpret the F-statistic, R-squared value, standard error, and p-values.
+Evaluate the interaction term (PropMD * TotExp). What does this interaction tell us about the relationship between the number of MDs, healthcare spending, and life expectancy?
+
+**Discussion:** How does the presence of more MDs amplify or diminish the effect of healthcare expenditures on life expectancy? What policy recommendations can be drawn from this analysis?
+
+**Solution:**
+
+```{r}
+model_3 <- lm(LifeExp ~ PropMD + TotExp + PropMD + (PropMD * TotExp), data = data)
+summary(model_3)
+```
+
+
+F-statistic is not explicitly given, but the multiple regression model explains 35.74% of the variance in life expectancy $(R^2 = 0.3574)$ with a residual standard error of $8.765$, indicating an improved fit compared to the original model. The coefficients for PropMD $(p < 0.001)$, TotExp $(p < 0.001)$, and their interaction $(p < 0.001)$  are all statistically significant, suggesting that both the proportion of MDs and total expenditures independently and interactively influence life expectancy. The negative interaction term indicates diminishing returns, where the effect of healthcare spending on life expectancy decreases as the proportion of MDs increases. Overall, the model is statistically significant and highlights the interplay between healthcare inputs.
+
+The interaction term $(PropMD \times TotExp)$ is statistically significant $(p<0.001)$ and negative, indicating that the positive effect of healthcare spending on life expectancy diminishes as the proportion of MDs increases. This suggests that in countries with a higher proportion of MDs, additional healthcare expenditures have a **smaller** impact on improving life expectancy, potentially due to system inefficiencies or a saturation effect. Conversely, in countries with a lower proportion of MDs, healthcare spending has a greater impact, emphasizing the importance of balancing spending with the availability of medical professionals to maximize health outcomes.
+
+
+**Discussion:** The presence of more MDs diminishes the effect of healthcare expenditures on life expectancy, as indicated by the negative interaction term, suggesting diminishing returns. In countries with a high proportion of MDs, additional spending has a smaller impact on improving life expectancy, likely due to system saturation or inefficiencies. However, in countries with fewer MDs, healthcare spending has a greater positive effect. Policy recommendations include prioritizing the recruitment and training of MDs in low-MD countries to maximize the impact of healthcare spending, while high-MD countries should focus on improving healthcare system efficiency to ensure resources are used effectively.
+
+***
+
+### **Question 5: Forecasting Life Expectancy with Interaction Terms**
+
+**Task** Using the multiple regression model from Question 4, forecast the life expectancy for a country where:
+
+- The proportion of MDs is 0.03 (PropMD = 0.03).
+
+- The total healthcare expenditure is 14 (TotExp = 14).
+
+**Discussion:** Does this forecast seem realistic? Why or why not? Consider both the potential strengths and limitations of using this model for forecasting in real-world policy settings.
+
+**Solution:**
+
+1. Model Equation:
+
+The regression equation is:
+$$LifeExp = \beta_0 + \beta_1 \times\ PropMD + \beta_2 \times\ TotExp + \beta_3 \times (PropMD \times \ TotExp)$$
+
+Where: 
+
+-$\beta_0 = 62.77$
+-$\beta_1 = 1497$
+-$\beta_2 = 7.233×10^{-5}$
+-$\beta_3 = −6.026×10^{-3}$
+
+2. Substituting Values: For $PropMD=0.03$ and $TotExp=14:$
+
+- Interaction term:$PropMD \times TotExp = 0.03\times 14=0.42$
+
+- Forecast life expectancy:
+
+$$LifeExp = 62.77 + (1497 \times 0.03) + (7.233 \times 10^{-5} \times 14) + (-6.026 \times 10^{-3} \times 0.42)$$
+
+Simplify each term:
+
+- $(1497⋅0.03)=44.91$
+
+- $(7.233×10^{-5} \times 14) = 0.00101262$
+
+- $(−6.026×10^{-3}\times 0.42) = −0.002531$
+
+Combine: $$LifeExp=62.77+44.91+0.00101262−0.002531≈107.68$$
+
+**Discussion:** The forecasted life expectancy of **107.68** years is unrealistic because it exceeds the maximum life expectancies observed worldwide. This shows that the model, while useful for understanding trends within the data range, may not work well for predicting values outside it. The interaction between healthcare spending and the proportion of MDs is complex, and the model’s linear form might overestimate the impact of these factors in extreme scenarios. While the model helps us understand general relationships, its predictions should be used cautiously for policy decisions, especially when applied to unusual or extreme cases. Policies should focus on using the insights (e.g., the importance of balancing MD proportions with expenditures) rather than relying on absolute predictions.
+
+***
+
+## **Problem 3-Retail Company Analyst:**
+
+### **Question 1-Inventory Cost:**
+
+**Scenario:** A retail company is planning its inventory strategy for the upcoming year. They expect to sell 110 units of a high-demand product. The storage cost is $3.75 per unit per year, and there is a fixed ordering cost of $8.25 per order. The company wants to minimize its total inventory cost.
+
+**Task:** Using calculus, determine the optimal lot size (the number of units to order each time) and the number of orders the company should place per year to minimize total inventory costs. Assume that the total cost function is given by:
+
+\[
+C(Q) = \frac{D}{Q} \cdot S + \frac{Q}{2} \cdot H
+\]
+
+Where:
+\begin{itemize}
+    \item \( D \) is the total demand,
+    \item \( Q \) is the order quantity,
+    \item \( S \) is the fixed ordering cost per order,
+    \item \( H \) is the holding cost per unit per year.
+\end{itemize}
+
+**Solution:**
+
+We aim to find the optimal order quantity \( Q \) that minimizes the total inventory cost. The total inventory cost is given by the formula:
+
+\[
+C(Q) = \frac{D}{Q} \cdot S + \frac{Q}{2} \cdot H
+\]
+
+Where:
+
+\begin{itemize}
+    \item \( D \) is the total demand,
+    \item \( Q \) is the order quantity,
+    \item \( S \) is the fixed ordering cost per order,
+    \item \( H \) is the holding cost per unit per year.
+\end{itemize}
+
+**Step 1:** Deriving the Optimal Order Quantity
+
+To minimize the total cost, we differentiate the total cost function with respect to \( Q \) and set the derivative equal to zero:
+
+\[
+\frac{dC}{dQ} = -\frac{D \cdot S}{Q^2} + \frac{H}{2}
+\]
+
+Setting the derivative equal to zero to find the optimal \( Q \):
+
+\[
+-\frac{D \cdot S}{Q^2} + \frac{H}{2} = 0
+\]
+
+Rearranging terms:
+
+\[
+\frac{D \cdot S}{Q^2} = \frac{H}{2}
+\]
+
+Solving for \( Q^2 \):
+
+\[
+Q^2 = \frac{2 \cdot D \cdot S}{H}
+\]
+
+Substitute the values \( D = 110 \), \( S = 8.25 \), and \( H = 3.75 \):
+
+\[
+Q^2 = \frac{2 \cdot 110 \cdot 8.25}{3.75}
+\]
+
+\[
+Q^2 = \frac{1815}{3.75} = 484
+\]
+
+Taking the square root of both sides:
+
+\[
+Q = \sqrt{484} = 22
+\]
+
+Thus, the optimal order quantity is \( Q = 22 \) units.
+
+**Step 2:** Calculating the Number of Orders per Year
+
+The number of orders the company should place per year is given by:
+
+\[
+\text{Number of Orders} = \frac{D}{Q} = \frac{110}{22} = 5
+\]
+
+Thus, the company should place 5 orders per year.
+
+**Step 3:** Calculating the Total Inventory Cost
+
+The total inventory cost is given by the formula:
+
+\[
+C(Q) = \frac{D}{Q} \cdot S + \frac{Q}{2} \cdot H
+\]
+
+Substitute \( D = 110 \), \( Q = 22 \), \( S = 8.25 \), and \( H = 3.75 \):
+
+\[
+C(22) = \frac{110}{22} \cdot 8.25 + \frac{22}{2} \cdot 3.75
+\]
+
+\[
+C(22) = 5 \cdot 8.25 + 11 \cdot 3.75 = 41.25 + 41.25 = 82.5
+\]
+
+Thus, the total inventory cost is \( C(22) = 82.5 \) dollars.
+
+
+```{r}
+# Given values
+D <- 110   # Total demand
+S <- 8.25  # Fixed ordering cost per order
+H <- 3.75  # Holding cost per unit per year
+
+# Calculate optimal order quantity Q
+Q_optimal <- sqrt((2 * D * S) / H)
+Q_optimal
+
+# Calculate the number of orders per year
+num_orders <- D / Q_optimal
+num_orders
+
+```
+
+***
+
+
+### **Question 2 Revenue Maximization:**
+
+**Scenario:** A company is running an online advertising campaign. The effectiveness of the campaign, in terms of revenue generated per day, is modeled by the function:
+
+Where:
+
+\[
+R(t) = -3150t^{-4} - 220t + 6530
+\]
+
+\( R(t) \) represents the revenue in dollars after t days of the campaign.
+
+**Task:** Determine the time t at which the revenue is maximized by finding the critical points of the revenue function and determining which point provides the maximum value. What is the maximum revenue the company can expect from this campaign?
+
+**Solution:**
+
+We are given the revenue function for the online advertising campaign:
+
+\[
+R(t) = -3150t^{-4} - 220t + 6530
+\]
+
+Step 1: Find the First Derivative of \( R(t) \)
+
+To find the critical points, we first take the derivative of \( R(t) \) with respect to \( t \):
+
+\[
+R'(t) = \frac{d}{dt} \left( -3150t^{-4} - 220t + 6530 \right)
+\]
+
+The derivative of each term is:
+\[
+\frac{d}{dt} (-3150t^{-4}) = 12600t^{-5}, \quad \frac{d}{dt} (-220t) = -220, \quad \frac{d}{dt} (6530) = 0
+\]
+
+Thus, the first derivative is:
+
+\[
+R'(t) = 12600t^{-5} - 220
+\]
+
+Step 2: Set the First Derivative Equal to Zero to Find Critical Points
+
+Set \( R'(t) = 0 \) to find the critical points:
+
+\[
+12600t^{-5} - 220 = 0
+\]
+
+Solving for \( t \):
+
+\[
+12600t^{-5} = 220
+\]
+
+\[
+t^{-5} = \frac{220}{12600} = \frac{11}{630}
+\]
+
+Taking the reciprocal of both sides:
+
+\[
+t = \left( \frac{630}{11} \right)^{\frac{1}{5}}
+\]
+
+Step 3: Verify Whether the Critical Point is a Maximum
+
+Next, we compute the second derivative of \( R(t) \) to verify if the critical point is a maximum. The second derivative is:
+
+\[
+R''(t) = \frac{d}{dt} \left( 12600t^{-5} - 220 \right)
+\]
+
+\[
+R''(t) = -63000t^{-6}
+\]
+
+Since \( R''(t) \) is always negative for \( t > 0 \), the critical point corresponds to a maximum.
+
+### Step 4: Calculate the Maximum Revenue
+
+Finally, substitute the value of \( t \) into the original revenue function \( R(t) \):
+
+\[
+R(t) = -3150t^{-4} - 220t + 6530
+\]
+
+Substitute the value of \( t \) obtained from Step 2 into this formula to find the maximum revenue.
+
+R-Code:
+
+```{r}
+# Given values
+t_critical <- (630 / 11)^(1 / 5)
+
+# Calculate the maximum revenue by substituting the critical point into R(t)
+R_max <- -3150 * t_critical^(-4) - 220 * t_critical + 6530
+
+cat("Critical time (t) at which revenue is maximized:", t_critical, "\n")
+cat("Maximum revenue the company can expect:", R_max, "\n")
+
+```
+***
+
+### **Question 3 Demand Area Under Curve:**
+
+**Scenario:** A company sells a product at a price that decreases over time according to the linear demand function:
+
+\[
+P(x) = 2x - 9.3
+\]
+
+Where:
+
+$P(x)$ is the price in dollars, and 
+$x$ is the quantity sold.
+
+**Task:** The company is interested in calculating the total revenue generated by this product between two quantity levels, $x_1 = 2$ and $x_2 = 5$, where the price still generates sales. Compute the area under the demand curve between these two points, representing the total revenue generated over this range.
+
+**Solution:**
+
+```{r}
+# Define the function for the price (demand function)
+p <- function(x) {
+  2 * x - 9.3
+}
+
+# Use the 'integrate' function to find the area under the curve from x = 2 to x = 5
+result <- integrate(p, lower = 2, upper = 5)
+
+# Display the result
+result$value
+```
+
+***
+
+### **Question 4 Profit Optimization:**
+
+**Scenario:** A beauty supply store sells flat irons, and the profit function associated with selling 
+x flat irons is given by:
+
+$\Pi(x) = x \ln(9x) - \frac{x^6}{6}$
+
+Where:
+
+$\Pi(x)$ is the profit in dollars.
+
+**Task:** Use calculus to find the value of $x$ that maximizes profit. Calculate the maximum profit that can be achieved and determine if this optimal sales level is feasible given market condition.
+
+**Solution:**
+
+1) Define the profit function.
+2) Differentiate the function.
+3) Find the critical points.
+4) Verify which critical point provides the maximum profit.
+
+Here's how to do it in R:
+
+```{r warning=FALSE, message=FALSE}
+# Load necessary library for symbolic differentiation
+library(Deriv)
+
+# Define the profit function Π(x)
+Pi <- function(x) {
+  x * log(9 * x) - (x^6) / 6
+}
+
+# Compute the derivative of the profit function
+dPi <- Deriv(Pi, "x")
+
+# Find critical points by solving dPi = 0
+# We use the uniroot function to find the root within a range where the function is valid
+root <- uniroot(dPi, lower = 0.1, upper = 10)$root
+
+# Compute the maximum profit by evaluating the profit function at the critical point
+max_profit <- Pi(root)
+
+# Display results
+cat("The value of x that maximizes profit is:", root, "\n")
+cat("The maximum profit is:", max_profit, "\n")
+
+```
+
+***
+
+### **Question 5 Spending Behavior:**
+
+**Scenario:** A market research firm is analyzing the spending behavior of customers in a retail store. The spending behavior is modeled by the probability density function:
+
+$f(x) = \frac{1}{6x}$
+
+Where $x$ represents spending in dollars.
+
+**Task:** Determine whether this function is a valid probability density function over the interval $[1, e^6]$. If it is, calculate the probability that a customer spends between $1$ and $e^6$.
+
+**Solution:**
+
+```{r}
+# Define the probability density function
+f <- function(x) {
+  1 / (6 * x)
+}
+
+# Define the interval [1, exp(6)]
+lower_bound <- 1
+upper_bound <- exp(6)
+
+# Check if it is a valid PDF by integrating over the interval
+total_probability <- integrate(f, lower = lower_bound, upper = upper_bound)$value
+
+# Calculate the probability that a customer spends between $1 and e^6
+probability <- integrate(f, lower = 1, upper = exp(6))$value
+
+# Display results
+cat("Total probability over [1, e^6]:", total_probability, "\n")
+cat("Probability that a customer spends between $1 and e^6:", probability, "\n")
+
+```
+
+This result shows that the entire distribution lies within this interval, as expected for a valid PDF.
+
+***
+
+### **Question 6 Market Share Estimation:**
+
+**Scenario:** An electronics company is analyzing its market share over a certain period. The rate of market penetration is given by:
+
+$\frac{dN}{dt} = \frac{500}{t^4 + 10}$
+
+Where $N(t)$ is the cumulative market share at time $t$.
+
+**Task:** Integrate this function to find the cumulative market share $N(t)$ after $t$ days, given that the initial market share $N(1) = 6530$. What will the market share be after 10 days?
+
+**Solution:**
+
+```{r}
+# Define the rate of market penetration function dN/dt
+dN_dt <- function(t) {
+  500 / (t^4 + 10)
+}
+
+# Initial market share at t = 1
+N_1 <- 6530
+
+# Integrate the function from t = 1 to t = 10
+integral_result <- integrate(dN_dt, lower = 1, upper = 10)$value
+
+# Calculate the market share after 10 days
+N_10 <- N_1 + integral_result
+
+# Display the results
+cat("The market share after 10 days is:", N_10, "\n")
+
+```
+
+***
+
+## **Problem 4 Business Optimization:**
+
+As a data scientist at a consultancy firm, you are tasked with optimizing various business functions to improve efficiency and profitability. Taylor Series expansions are a powerful tool to approximate complex functions, allowing for simpler calculations and more straightforward decision-making. This week, you will work on Taylor Series expansions of popular functions commonly encountered in business scenarios.
+
+### **Question 1 Revenue and Cost:**
+
+**Scenario:** A company’s revenue from a product can be approximated by the function $R(x) = e^x$, where $x$ is the number of units sold. The cost of production is given by $C(x) = \ln(1 + x)$. The company wants to maximize its profit, defined as $\Pi(x) = R(x) - C(x).$
+
+**Task:** Use the Taylor Series expansion around $x = 0$ (Maclaurin series) to approximate the revenue function to approximate the revenue function $R(x) = e^x$ up to the second degree. Explain why this approximation might be useful in a business context.
+
+**Solution**
+
+**Taylor Series Expansion for** $R(x):$
+
+The Taylor Series expansion of a function $f(x)$ around $x = 0$ (Maclaurin series) is given by:
+
+$$
+f(x) = f(0) + f'(0)x + \frac{f''(0)}{2!}x^2 + \dots
+$$
+
+For the revenue function $R(x) = e^x:$
+
+- The first derivative is $ R'(x) = e^x$,
+
+- The second derivative is $ R''(x) = e^x$,
+
+- All higher-order derivatives are also $R^{(n)}(x) = e^x$.
+
+At $x = 0$, all derivatives evaluate to $e^0 = 1$. Thus, the Taylor Series expansion becomes:
+
+$$
+R(x) = 1 + x + \frac{x^2}{2!} + \dots
+$$
+Truncating this series at the second degree:
+
+$$
+R(x) \approx 1 + x + \frac{x^2}{2}
+$$
+
+This provides a quadratic approximation of the revenue function around $x = 0.$
+
+- **Approximation for Revenue Function**
+
+The approximated revenue function is: 
+$$R(x) \approx 1 + x + \frac{x^2}{2}$$
+
+This simplification is valid for small values of $x$ (units sold), making it practical for business applications.
+
+- **Why is this Approximation Useful?**
+
+Approximating the revenue function $R(x) = e^x:$ using the Taylor Series expansion using the Taylor Series expansion $R(x) \approx 1 + x + \frac{x^2}{2}$  simplifies complex exponential computations, making it faster and easier for businesses to analyze revenue, especially for small values of $x$. This approximation captures the local behavior of $R(x)$ near $x=0$, which is useful for evaluating early sales or production stages. It also facilitates optimization by combining with the cost function $C(x)=ln(1+x)$ to simplify profit analysis $\Pi(x)=R(x)−C(x)$. Additionally, it allows managers to estimate revenue changes quickly and effectively, making it a cost-efficient tool for decision-making in scenarios like product launches or small-scale operations, while retaining sufficient accuracy for practical applications.
+
+
+**1.2 Approximate the Cost Function:** Similarly, approximate the cost function $C(x) = \ln(1 + x)$ using its 'Maclaurin' series expansion up to the second degree. Discuss the implications of this approximation for decision-making in production. 
+
+**Solution**
+
+To approximate the cost function $C(x) = \ln(1 + x)$ using its Maclaurin series expansion, we expand the function around $x = 0$ up to the second degree.
+
+**Maclaurin Series Expansion**
+
+The Taylor Series expansion of a function$f(x)$ around $x = 0$ is: 
+$$
+f(x) = f(0) + f'(0)x + \frac{f''(0)}{2!}x^2 + \dots
+$$
+
+For $C(x) = \ln(1 + x)$:
+- The first derivative is $f'(x) = \frac{1}{1 + x}$,
+- The second derivative is $f''(x) = -\frac{1}{(1 + x)^2}$.
+
+At $x = 0$:
+- $f(0) = \ln(1 + 0) = 0$,
+- $f'(0) = \frac{1}{1 + 0} = 1$,
+- $f''(0) = -\frac{1}{(1 + 0)^2} = -1$.
+
+Substituting these values into the Taylor series formula:
+
+$$
+C(x) = f(0) + f'(0)x + \frac{f''(0)}{2!}x^2 + \dots
+$$
+
+Truncating at the second degree:
+
+$$
+C(x) \approx 0 + x - \frac{x^2}{2}
+$$
+
+Thus, the approximate cost function is:
+
+$$
+C(x) \approx x - \frac{x^2}{2}
+$$
+
+**Implications for Decision-Making in Production**
+
+Estimating the logarithmic cost function$C(x)=ln(1+x)$ with its Maclaurin series expansion $C(x) \approx 0 + x - \frac{x^2}{2}$ simplifies complex computations, making it easier for quick evaluations and cost analysis. The linear term $x$ captures the primary growth of costs for small $x$, while the quadratic term $-\frac{x^2}{2}$ reflects a slight reduction in marginal cost growth as production scales. This simplification facilitates profit optimization when combined with the revenue function $R(x)$, helping businesses efficiently determine optimal production levels. Additionally, it supports decision-making in production planning, pricing, and scaling, especially during initial stages or small production ranges like product launches.
+
+**1.3 Linear vs. Nonlinear Optimization:** Using the Taylor Series expansions, approximate the profit function $\Pi(x)$. Compare the optimization results when using the linear approximations versus the original nonlinear functions. What are the differences, and when might it be more appropriate to use the approximation?
+
+
+**Linear vs. Nonlinear Optimization of** $\Pi(x)$
+
+**Step 1:** The profit function is defined as: $$\Pi(x) = R(x) - C(x)$$
+
+
+Using the Taylor Series expansions for $R(x) = e^x$ and $C(x) = \ln(1 + x)$, we approximate these functions up to the second degree:
+
+- **Revenue Function Approximation:**  $$R(x) \approx 1 + x + \frac{x^2}{2}$$
+
+
+- **Cost Function Approximation:** $$C(x) \approx x - \frac{x^2}{2}$$
+
+
+*Substituting these approximations into the profit function:* $$\Pi(x) \approx (1 + x + \frac{x^2}{2}) - (x - \frac{x^2}{2})$$
+
+
+Simplifying:$$\Pi(x) \approx 1 + x + \frac{x^2}{2} - x + \frac{x^2}{2}$$
+
+$$\Pi(x) \approx 1 + x^2$$
+
+Thus, the **approximated profit function** is: $$\Pi(x) \approx 1 + x^2$$
+
+
+**Step 2:** Optimization
+
+- 2.1. **Original Nonlinear Functions:** Using the original forms of $R(x) = e^x$ and $C(x) = \ln(1 + x)$, the profit function becomes:
+
+$$
+\Pi(x) = e^x - \ln(1 + x)
+$$
+Finding the critical points requires solving:
+
+$$
+\frac{d}{dx} \Pi(x) = \frac{d}{dx} \left( e^x - \ln(1 + x) \right)
+$$
+
+$$
+\frac{d}{dx} \Pi(x) = e^x - \frac{1}{1 + x} = 0
+$$
+
+This equation must be solved numerically, as it does not yield a closed-form solution.
+
+- 2.2. **Approximated Linear Functions:**
+
+Using the approximated profit function $\Pi(x) \approx 1 + x^2$:
+
+$$\frac{d}{dx} \Pi(x) = \frac{d}{dx} \left( 1 + x^2 \right)$$
+
+$$ \frac{d}{dx} \Pi(x) = 2x$$
+
+Setting $$ \frac{d}{dx} \Pi(x) = 0$$:
+
+$$2x = 0 \implies x = 0$$
+
+
+- **Step 3:** Comparison of Results
+
+- 3.1. **Critical Points:** For the original nonlinear profit function, the critical point depends on solving $e^x = \frac{1}{1 + x}$, which may produce a more accurate but computationally intensive result. For the approximated profit function, the critical point is straightforward (\( x = 0 \)), though it may only be accurate for small $x$.
+
+- 3.2. **Complexity:** The original nonlinear functions involve exponential and logarithmic terms, making optimization more complex and requiring numerical methods. The approximated function is a simple quadratic, allowing for analytical solutions and faster computations.
+
+- **Step 4:** When to Use the Approximation: The approximation is best used for small values of $x$, where the Taylor Series expansions remain accurate, offering computational simplicity and enabling quick decision-making during early analysis or prototyping. However, for larger values of $x$, where the approximation deviates significantly from the true functions, or in scenarios requiring high precision, such as final production planning or critical optimization tasks, the original nonlinear functions should be used for more accurate results.
+
+**Conclusion:** The linear approximation provides a simpler and faster way to optimize the profit function, making it suitable for small values of $x$ and scenarios where speed and simplicity are prioritized. However, the original nonlinear functions offer greater accuracy, especially for larger values of $x$, and should be used when precision is necessary. Balancing these approaches depends on the specific business context and the trade-off between accuracy and complexity.
+
+***
+
+### **Question 2 Financial Modeling:**
+
+**Scenario:** A financial analyst is modeling the risk associated with a new investment. The risk is proportional to the square root of the invested amount, modeled as $f(x) = \sqrt{x}$, where $x$ is the amount invested. However, to simplify calculations, the analyst wants to use a Taylor Series expansion to approximate this function for small investments.
+
+**Task:**
+
+**2.1. Maclaurin Series Expansion:** Derive the Taylor Series expansion of $f(x) = \sqrt{x}$ around $x = 0$ up to the second degree. 
+
+**Solution**
+
+The Maclaurin series is a Taylor Series expansion around $x=0$. For $f(x)= \sqrt x$, we compute its derivatives and evaluate them at $x=0$, then substitute them into the Taylor series formula.
+
+The Taylor Series expansion of a function $f(x)$ around $x = 0$ is: 
+
+$$
+f(x) = f(0) + f'(0)x + \frac{f''(0)}{2!}x^2 + \dots
+$$
+- Step 1. Computer $f(x) = \sqrt x = x^{1/2}$ and it's Derivatives
+
+- Zeroth Derivative (Function itself): $$f(x) = x^{1/2}$$
+at $x=0:$
+
+$$f(0) = \sqrt(0) = 0$$
+
+- First Derivative: Using the power rule:
+
+$$f'(x) = \frac{1}{2}x^{-1/2} = \frac{1}{2\sqrt{x}}$$
+
+At $x=0$, $f′(x)$ is undefined because $\sqrt{x}$ is not differentiable at $x=0$. To work around this issue, we assume small $x>0$ and proceed to analyze higher-order behavior.
+
+
+- Second Derivative: The second derivative is: 
+
+$$f''(x) = \frac{d}{dx}\left(\frac{1}{2}x^{-1/2}\right) = -\frac{1}{4}x^{-3/2}$$
+
+Similar to the first derivative, $f′′(x)$ is undefined at $x=0$, indicating this series requires special domain assumptions.
+
+
+**Feasibility for Expansion at x=0**
+
+Since $\sqrt x$ is not differentiable at $x=0$, Taylor Series expansion around $x=0$ cannot proceed in the standard form. Instead, it is better to shift the expansion point slightly (e.g., x = ϵ>0) to allow for practical approximations of $f(x)$ within a relevant domain.
+
+
+**2.2 Practical Application:** Use the derived series to approximate the risk for small investment amounts (e.g., when x is small). Compare the approximated risk with the actual function values for small and moderate investments. Discuss when this approximation might be useful in financial modeling.
+
+Derived Series for $f(x) = \sqrt x$
+
+From the Taylor Series approximation around $x=0$, $f(x)= \sqrt x$ can be approximated up to the second degree as:
+
+$$f(x) \approx 0 + \frac{1}{2}x + \frac{-1}{8}x^2$$
+$$f(x) \approx \frac{1}{2}x - \frac{1}{8}x^2$$
+*Comparing Approximation with Actual Values*
+
+For small values of $x (e.g., e = 0.1, x = 0.2, x = 0.5)$, the approximation of $f(x) \approx \frac{1}{2}x - \frac{1}{8}x^2$ closely aligns with the actual function $f(x)= \sqrt x$ However, as $x$ grows ;arger, the deviation increases due to the truncation of higher-order terms in the Taylor Series. 
+
+*Practical Use in Financial Modeling*
+
+The Taylor Series approximation is valuable in financial modeling as it simplifies calculations by replacing the square root function with a polynomial approximation, making risk estimation more straightforward. It is particularly useful for small investment amounts, such as initial portfolio allocations or experimental scenarios, where the approximation remains sufficiently accurate. Additionally, it facilitates quick risk evaluations during scenario planning, iterative modeling, and sensitivity analysis, enabling more efficient decision-making.
+
+**2.3 Optimization Scenario:** Suppose the goal is to minimize risk while maintaining a certain level of investment return. Using the Taylor Series approximation, suggest an optimal investment amount $x$ that balances risk and return.
+
+*Minimizing Risk While Maintaining Return*
+
+To balance risk and return, we define the trade-off function as: 
+$$ G(x) = R(x) - k \cdot f(x)$$
+where:
+- $R(x)$ is the return as a function of the investment amount $x$,
+- $f(x)$ represents the risk, modeled as $f(x) = \sqrt{x}$,
+- $k$ is a weight reflecting the importance of minimizing risk.
+
+**Using the Taylor Series Approximation**
+
+Substituting the Taylor Series approximation $$f(x) \approx \frac{1}{2}x - \frac{1}{8}x^2$$, the trade-off function becomes:
+
+$$
+G(x) = R(x) - k \left( \frac{1}{2}x - \frac{1}{8}x^2 \right)
+$$
+
+For simplicity, lets assume $R(x)$ is linear, such as $R(x) = ax$, where $a > 0$. Substituting $R(x) = ax$:
+
+$$
+G(x) = ax - k \left( \frac{1}{2}x - \frac{1}{8}x^2 \right)
+$$
+
+Simplify:$$G(x) = \left(a - \frac{k}{2}\right)x + \frac{k}{8}x^2$$
+
+**Optimizing** $G(x)$
+To find the optimal investment $x$ that maximizes $G(x)$, calculate the derivative and set it to zero:
+
+$$
+\frac{dG(x)}{dx} = \left(a - \frac{k}{2}\right) + \frac{k}{4}x
+$$
+
+Setting $$\frac{dG(x)}{dx} = 0$$:
+
+$$
+\left(a - \frac{k}{2}\right) + \frac{k}{4}x = 0
+$$
+
+Solve for $x$:
+
+$$
+x = \frac{-4\left(a - \frac{k}{2}\right)}{k}
+$$
+
+**Conclusion** The optimal investment amount $x$ depends on the parameters $a$ (rate of return) and $k$ (risk weight). This approximation provides a practical way to evaluate risk-return trade-offs efficiently, particularly for small investments or in scenarios requiring simplified computations.
+
+***
+
+### **Question 3 Inventory Management:**
+
+**Scenario:** In a manufacturing process, the demand for a product decreases as the price increases, modeled by $D(p) = 1 - p$ where $p$ is the price, The cost associated with producing and selling the product is modeled as $C(p) = e^p$ the company wants to maximize its profit, which is the difference between revenue and cost.
+
+**Task:**
+
+**3.1 Taylor Series Expansion:** Expand the cost function $C(p) = e^p$ into a Taylor Series around up $p=0$ to the second degree. Discuss why approximating the cost function might be useful in a pricing strategy.
+
+*Taylor Series Expansion of* $C(p) = e^p$
+
+The cost function $C(p) = e^p$ can be expanded into a Taylor Series around $p = 0$. The Taylor Series expansion is given by:
+
+$$
+C(p) = C(0) + C'(0)p + \frac{C''(0)}{2!}p^2 + \dots
+$$
+
+- **Step 1: Compute Derivatives**
+
+- 1. Zeroth Derivative:
+$$
+C(p) = e^p \quad \text{so} \quad C(0) = e^0 = 1
+$$
+
+- 2. First Derivative:
+$$
+C'(p) = e^p \quad \text{so} \quad C'(0) = e^0 = 1
+$$
+
+- 3. Second Derivative:
+$$
+C''(p) = e^p \quad \text{so} \quad C''(0) = e^0 = 1
+$$
+
+- **Step 2: Substitute into the Taylor Series**
+Substituting these derivatives into the Taylor Series formula:
+
+$$
+C(p) \approx 1 + p + \frac{1}{2}p^2
+$$
+
+Thus, the approximated cost function is:
+
+$$
+C(p) \approx 1 + p + \frac{1}{2}p^2
+$$
+
+**Discussion** Approximating the cost function $C(p) = e^p$ as $C(p) \approx 1 + p + \frac{1}{2}p^2$ is useful in pricing strategy because it simplifies complex exponential computations into a manageable polynomial. This makes it easier to analyze and predict cost behavior for small price changes, enabling quick evaluations of pricing scenarios and their impact on profitability. Additionally, the approximation provides insights into marginal cost and the rate of change in costs as price increases, which are crucial for optimizing pricing decisions.
+
+**3.2 Approximating Profit:** Using the Taylor Series expansion, approximate the profit function $\Pi(p) = pD(p) - C(p)$. Compare the results when using the original nonlinear cost function versus the approximated cost function. What differences do you observe, and when might the approximation be sufficient?
+
+**Solution**
+
+Approximating Profit Function $\Pi(p)$
+
+The profit function is defined as:$$ \Pi(p) = pD(p) - C(p)$$
+
+
+where:
+- $ D(p) = 1 - p$  is the demand function,
+- $ C(p) = e^p $ is the cost function.
+
+- **Step 1: Substitute** $D(p)$ and $C(p)$
+
+The profit function becomes: $$\Pi(p) = p(1 - p) - e^p$$
+
+Simplify:$$\Pi(p) = p - p^2 - e^p$$
+
+- **Step 2: Approximate** $C(p)$ **Using Taylor Series**
+
+Using the Taylor Series expansion for $C(p) = e^p$ around $p = 0$, approximated up to the second degree:
+
+$$C(p) \approx 1 + p + \frac{1}{2}p^2$$
+
+Substitute the approximated cost function into the profit function:$$\Pi(p) \approx p - p^2 - \left(1 + p + \frac{1}{2}p^2\right)$$
+
+Simplify:$$\Pi(p) \approx p - p^2 - 1 - p - \frac{1}{2}p^2$$
+
+$$
+\Pi(p) \approx -p^2 - \frac{1}{2}p^2 - 1
+$$
+
+$$
+\Pi(p) \approx -\frac{3}{2}p^2 - 1
+$$
+
+Thus, the approximated profit function is:
+
+$$
+\Pi(p) \approx -\frac{3}{2}p^2 - 1
+$$
+
+- **Step 3: Compare Results, Observations and Utility of the Approximation**
+
+The original profit function, using the nonlinear cost $ C(p) = e^p $, requires numerical evaluation due to the complexity of the exponential term, making it computationally intensive. In contrast, the Taylor Series approximation simplifies the profit function to a quadratic expression, $\Pi(p) \approx -\frac{3}{2}p^2 - 1,$ which is much easier to compute and analyze, especially for small values of pp. This approximation is particularly useful for evaluating small price changes or conducting sensitivity analyses in initial pricing experiments. However, for larger values of $p$, the approximation diverges significantly from the original nonlinear function due to the omission of higher-order terms, and the original function should be used for precise pricing strategies involving higher price points.
+
+
+**3.3 Pricing Strategy:** Based on the Taylor Series approximation, suggest a pricing strategy that could maximize profit. Explain how the Taylor Series approximation helps in making this decision.
+
+*Maximizing Profit Using the Taylor Series Approximation* 
+The approximated profit function is: 
+
+$$
+\Pi(p) \approx -\frac{3}{2}p^2 - 1
+$$
+
+
+- **Maximize Profit** To find the price $p$  that maximizes profit, calculate the derivative of the approximated profit function and set it to zero:
+
+$$
+\frac{d\Pi(p)}{dp} = \frac{d}{dp}\left(-\frac{3}{2}p^2 - 1\right)
+$$
+
+$$
+\frac{d\Pi(p)}{dp} = -3p
+$$
+
+Setting $$\frac{d\Pi(p)}{dp} = 0:$$
+
+$$
+-3p = 0 \implies p = 0
+$$
+
+At $$p = 0$$, the approximated profit function suggests no price increase is optimal for maximizing profit under the Taylor approximation.
+
+- **Adjusting the Pricing Strategy**
+In practice, $p = 0$ may not be feasible, as it implies offering the product at no price. The Taylor Series approximation helps by simplifying the profit function and providing insight into the behavior of profit as $p$ changes. For small values of $p$, the approximation allows the company to test price points close to zero, balancing demand and cost effectively. 
+
+**Conclusion** The Taylor Series approximation simplifies complex exponential terms, making it easier to evaluate the profit function for small price changes. While $p = 0$ is the theoretical maximum under this approximation, the strategy in practice would involve testing small, positive prices to achieve a balance between high demand and low costs. For larger price ranges, the original nonlinear function should be used for precise optimization.
+
+***
+
+### **Question 4 Economic Forecasting:**
+
+Scenario: An economist is forecasting economic growth, which can be modeled by the logarithmic function $G(x) = \ln(1 + x)$ , where $x$ represents investment in infrastructure. The government wants to predict growth under different levels of investment.
+
+**Task:**
+
+**4.1 Maclaurin Series Expansion:** Derive the Maclaurin Series expansion of $G(x) = \ln(1 + x)$ up to the second degree. Explain the significance of using this approximation for small values of x in economic forecasting.
+
+**Solution**
+
+The function $G(x) = \ln(1 + x)$ can be expanded into a Maclaurin Series around $x = 0$ using the Taylor Series formula:
+
+$$
+G(x) = G(0) + G'(0)x + \frac{G''(0)}{2!}x^2 + \dots
+$$
+
+Step 1: Compute Derivatives
+
+- 1. **Zeroth Derivative:**
+$$
+G(x) = \ln(1 + x) \quad \text{so} \quad G(0) = \ln(1 + 0) = 0
+$$
+
+2. **First Derivative:**
+$$
+G'(x) = \frac{1}{1 + x} \quad \text{so} \quad G'(0) = \frac{1}{1 + 0} = 1
+$$
+
+- 3. **Second Derivative:**
+$$
+G''(x) = -\frac{1}{(1 + x)^2} \quad \text{so} \quad G''(0) = -\frac{1}{(1 + 0)^2} = -1
+$$
+
+Step 2: Substitute into the Maclaurin Series
+
+Substituting the derivatives into the Taylor Series formula:
+
+$$
+G(x) = 0 + 1 \cdot x + \frac{-1}{2}x^2
+$$
+
+*Simplify:*
+
+$$
+G(x) \approx x - \frac{1}{2}x^2
+$$
+
+Thus, the Maclaurin Series expansion of $G(x)$ up to the second degree is:
+
+$$
+G(x) \approx x - \frac{1}{2}x^2
+$$
+
+**Significance of the Approximation** The Maclaurin Series approximation $G(x) \approx x - \frac{1}{2}x^2$ simplifies the logarithmic growth function into a manageable polynomial, making calculations for small values of $x$ more efficient. In economic forecasting, this is particularly useful for analyzing incremental changes in infrastructure investment, as small investments often have predictable impacts on growth. This approximation provides a quick and accurate estimate of economic growth when $x$ is small, enabling policymakers to evaluate the marginal benefits of additional investment without relying on complex logarithmic calculations. However, for larger values of $x$, the approximation diverges, and the full logarithmic function should be used for precise forecasts.
+
+**4.2 Approximation of Growth:** Use the Taylor Series to approximate the growth for small investments. Compare this approximation with the actual growth function. Discuss the accuracy of the approximation for different ranges of x.
+
+**Solution**
+
+**Approximation of Growth:**
+
+The growth function is given as:$$G(x) = \ln(1 + x)$$
+
+Using the Taylor Series expansion, we approximated $G(x)$ as:
+
+$$
+G(x) \approx x - \frac{1}{2}x^2
+$$
+
+**Comparison of Approximation with Actual Growth**
+
+```{r}
+# Define the functions
+actual_growth <- function(x) {
+  log(1 + x)
+}
+
+approximated_growth <- function(x) {
+  x - (1 / 2) * x^2
+}
+
+# Define the x-values
+x_values <- c(0.1, 0.5, 1.0, 2.0)
+
+# Compute actual and approximated values
+actual_values <- actual_growth(x_values)
+approximated_values <- approximated_growth(x_values)
+
+# Compute the differences
+differences <- actual_values - approximated_values
+
+# Create a data frame for comparison
+comparison <- data.frame(
+  x = x_values,
+  Actual_Growth = actual_values,
+  Approximated_Growth = approximated_values,
+  Difference = differences
+)
+
+# Display the data frame
+comparison
+```
+
+#### **Visualization:**
+
+```{r}
+library(ggplot2)
+
+# Create a data frame for visualization
+plot_data <- data.frame(
+  x = rep(x_values, 2),
+  Growth = c(actual_values, approximated_values),
+  Type = rep(c("Actual", "Approximated"), each = length(x_values))
+)
+
+# Plot
+ggplot(plot_data, aes(x = x, y = Growth, color = Type)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Comparison of Actual and Approximated Growth",
+    x = "Investment (x)",
+    y = "Growth"
+  ) +
+  theme_minimal()
+
+```
+
+**Discussion of accuracy:** The plot shows that the Taylor Series approximation $G(x) \approx x - \frac{1}{2}x^2$ closely matches the actual growth function $G(x)=ln⁡(1+)x$ for small values of $x$, such as $x<0.5$, making it highly accurate in this range. However, as $x$ increases beyond 1, the approximation diverges significantly from the actual function, with the approximated growth even turning negative around $x=2$, while the actual growth remains positive. This highlights that the approximation is only reliable for small  investments and unsuitable for larger values of $x$, as shows in the plot.  
+
+**4.3 Policy Recommendation:**  Using the approximation, recommend a level of investment that could achieve a target growth rate. Discuss the limitations of using Taylor Series approximations for such policy recommendations.
+
+**Solution** 
+
+Using the Taylor Series approximation $G(x) \approx x - \frac{1}{2}x^2$, we can estimate how much investment is needed to achieve a target growth rate. For example, solving $x - \frac{1}{2}x^2 = T$ (where $T$ is the target growth), gives us an approximate value for $x$. This approach is helpful for small growth targets because the approximation simplifies the calculation. However, the approximation becomes less accurate for larger investments, as it does not account for higher-order terms in the actual logarithmic function. Therefore, while this method works well for small investments and quick estimates, it should not be used alone for larger growth targets or when precise predictions are needed.
+
+***
+
+## **Problem 5 Profit, Cost, & Pricing:**
+
+### **Question 1. Profit Maximization:**
+
+**Scenario:** A company produces two products, A and B. The profit function for the two products is given by:
+
+$$
+\Pi(x, y) = 30x - 2x^2 - 3xy + 24y - 4y^2
+$$
+**Where:**
+- $x$ is the quantity of Product A produced and sold.
+- $y$ is the quantity of Product B produced and sold.
+- $\Pi (x, y)$ is the profit in dollars.
+
+
+**Task:**
+
+**5.1** Find all local maxima, local minima, and saddle points for the profit function $\Pi(x, y)$.
+
+**5.2** Write your answer(s) in the form $(x, y, \Pi(x, y))$. Separate multiple points with a comma.
+
+**Discussion:**  Discuss the implications of the results for the company’s production strategy. Which production levels maximize profit, and what risks are associated with the saddle points?
+
+
+**Solution**
+
+To solve this problem, we need to:
+
+1. Compute the first partial derivatives of \(\Pi(x, y)\):
+$$
+\frac{\partial \Pi}{\partial x} = 30 - 4x - 3y, \quad \frac{\partial \Pi}{\partial y} = 24 - 3x - 8y
+$$
+
+2. Set these partial derivatives equal to zero to find the critical points:
+$$
+\frac{\partial \Pi}{\partial x} = 0 \quad \text{and} \quad \frac{\partial \Pi}{\partial y} = 0
+$$
+
+Solving this system of equations:
+   
+$$
+30 - 4x - 3y = 0, \quad 24 - 3x - 8y = 0
+$$
+
+3. Compute the second partial derivatives:
+$$
+\frac{\partial^2 \Pi}{\partial x^2} = -4, \quad \frac{\partial^2 \Pi}{\partial y^2} = -8, \quad \frac{\partial^2 \Pi}{\partial x \partial y} = -3
+$$
+
+4. Use the Hessian determinant to classify the critical points:
+$$
+H = \frac{\partial^2 \Pi}{\partial x^2} \cdot \frac{\partial^2 \Pi}{\partial y^2} - \left( \frac{\partial^2 \Pi}{\partial x \partial y} \right)^2
+$$
+
+Substituting the second partial derivatives:
+$$
+H = (-4)(-8) - (-3)^2 = 32 - 9 = 23
+$$
+
+Since $H > 0$ and $\frac{\partial^2 \Pi}{\partial x^2} < 0$, the critical point is a local maximum.
+
+**Results**
+
+The critical points are:
+- Local maximum: $(x, y, \Pi(x, y)) = (6, 2, 180)$
+- Saddle points: (None in this case)
+
+**Discussion**
+
+- The company maximizes profit by producing and selling 6 units of Product A and 2 units of Product B, yielding a maximum profit of *$180*.
+- No saddle points were identified in this case, reducing the risk of unstable production decisions.
+- The company should focus production near this optimal point but remain vigilant to ensure demand and costs remain consistent with these assumptions.
+
+***
+
+### **Question 2 Pricing Strategy:**
+
+**Scenario:** A supermarket sells two competing brands of a product: Brand X and Brand Y. The store manager estimates that the demand for these brands depends on their prices, given by the functions:
+
+\[
+D_X(x, y) = 120 - 15x + 10y
+\]
+\[
+D_Y(x, y) = 80 + 5x - 20y
+\]
+
+**Where:**
+
+- \(x\) is the price of Brand X in dollars.
+- \(y\) is the price of Brand Y in dollars.
+- \(D_X(x, y)\) and \(D_Y(x, y)\) are the quantities demanded for Brand X and Brand Y, respectively.
+
+### **Task**
+
+1. Revenue Function: Find the revenue function \(R(x, y)\) for both brands combined.
+2. Optimal Pricing: Determine the prices \(x\) and \(y\) that maximize the store’s total revenue. Are there any saddle points to consider in the pricing strategy?
+
+**Solution**
+
+**Step 1:** Revenue Function
+
+The revenue for Brand X is given by:
+$$
+R_X(x, y) = x \cdot D_X(x, y) = x(120 - 15x + 10y)
+$$
+
+$$
+R_X(x, y) = 120x - 15x^2 + 10xy
+$$
+The revenue for Brand Y is given by:
+$$
+R_Y(x, y) = y \cdot D_Y(x, y) = y(80 + 5x - 20y)
+$$
+$$
+R_Y(x, y) = 80y + 5xy - 20y^2
+$$
+
+The total revenue is the sum of $R_X(x, y)$ and $R_Y(x, y)$:
+$$
+R(x, y) = R_X(x, y) + R_Y(x, y)
+$$
+
+$$
+R(x, y) = 120x - 15x^2 + 10xy + 80y + 5xy - 20y^2
+$$
+
+$$
+R(x, y) = 120x - 15x^2 + 15xy + 80y - 20y^2
+$$
+
+**Step 2:** Optimal Pricing
+
+- 1. **First Partial Derivatives:**
+$$
+\frac{\partial R}{\partial x} = 120 - 30x + 15y
+$$
+$$
+\frac{\partial R}{\partial y} = 80 + 15x - 40y
+$$
+
+- 2. **Critical Points:**
+
+Set $\frac{\partial R}{\partial x} = 0$ and $\frac{\partial R}{\partial y} = 0$:
+$$ 
+120 - 30x + 15y = 0
+$$
+$$
+80 + 15x - 40y = 0
+$$
+*Solve the system of equations:*
+$$x = 3, \quad y = 2$$
+
+3. **Second Partial Derivatives:**
+$$
+\frac{\partial^2 R}{\partial x^2} = -30, \quad \frac{\partial^2 R}{\partial y^2} = -40, \quad \frac{\partial^2 R}{\partial x \partial y} = 15
+$$
+
+*The Hessian determinant is:*
+
+$$H = \frac{\partial^2 R}{\partial x^2} \cdot \frac{\partial^2 R}{\partial y^2} - \left( \frac{\partial^2 R}{\partial x \partial y} \right)^2$$
+
+$$
+H = (-30)(-40) - (15)^2 = 1200 - 225 = 975
+$$
+
+Since $H > 0$ and $\frac{\partial^2 R}{\partial x^2} < 0$, the critical point $(x, y) = (3, 2)$ is a local maximum.
+
+4. **Revenue at Optimal Prices:**
+
+Substituting \(x = 3\) and \(y = 2\) into \(R(x, y)\):
+$$
+R(3, 2) = 120(3) - 15(3)^2 + 15(3)(2) + 80(2) - 20(2)^2
+$$
+$$
+R(3, 2) = 360 - 135 + 90 + 160 - 80 = 395
+$$
+
+**Results**
+
+- Optimal prices: $(x, y) = (3, 2)$
+- Maximum revenue: $(R(3, 2) = 395$
+- Saddle points: None identified.
+
+**Discussion**
+
+The optimal pricing strategy suggests setting the price of Brand X at \$3 and Brand Y at \$2 to maximize total revenue at \$395. This result reflects the balance between competitive pricing and maximizing demand for both brands. 
+
+In a competitive retail environment, this pricing strategy helps maintain customer interest in both products while maximizing combined revenue. The absence of saddle points simplifies decision-making, reducing the risk of instability in pricing strategy. Regularly updating these calculations based on market trends and customer preferences is essential to sustaining optimal results.
+
+***
+
+### **Question 3 Cost Minimization:**
+
+**Scenario:** A manufacturing company operates two plants, one in New York and one in Chicago. The company needs to produce a total of 200 units of a product each week. The total weekly cost of production is given by:
+
+$$C(x, y) = \frac{1}{8}x^2 + \frac{1}{10}y^2 + 12x + 18y + 1500$$
+Where:
+
+$x$ is the number of units produced in New York.
+$y$ is the number of units produced in Chicago.
+$C(x, y)$ is the total cost in dollars.
+
+**Task:**
+
+1. Determine how many units should be produced in each plant to minimize the total weekly cost.
+2. What is the minimized total cost, and how does the distribution of production between the two plants affect overall efficiency?
+
+**Discussion:** Discuss the benefits of this cost-minimization strategy and any practical considerations that might influence the allocation of production between the two plants.
+
+
+**Solution**
+
+*Step 1:* Formulate the Problem
+
+The goal is to minimize $C(x, y)$ subject to the constraint:$x + y = 200$
+
+Using the method of Lagrange multipliers, we define the Lagrange function:
+$$
+\mathcal{L}(x, y, \lambda) = \frac{1}{8}x^2 + \frac{1}{10}y^2 + 12x + 18y + 1500 + \lambda(200 - x - y)
+$$
+
+*Step 2:* Compute the Partial Derivatives
+
+- 1. Partial derivatives of $\mathcal{L}:$
+
+$$
+\frac{\partial \mathcal{L}}{\partial x} = \frac{1}{4}x + 12 - \lambda
+$$
+$$
+\frac{\partial \mathcal{L}}{\partial y} = \frac{1}{5}y + 18 - \lambda
+$$
+$$
+\frac{\partial \mathcal{L}}{\partial \lambda} = 200 - x - y
+$$
+
+- 2. Set the partial derivatives to zero:
+$$
+\frac{1}{4}x + 12 = \lambda \quad \text{(1)}
+$$
+$$
+\frac{1}{5}y + 18 = \lambda \quad \text{(2)}
+$$
+$$
+x + y = 200 \quad \text{(3)}
+$$
+
+**Step 3:** Solve the System of Equations
+
+From (1) and (2):
+$$
+\frac{1}{4}x + 12 = \frac{1}{5}y + 18
+$$
+$$
+\frac{1}{4}x - \frac{1}{5}y = 6
+$$
+Multiply through by 20 to eliminate fractions:
+$$
+5x - 4y = 120 \quad \text{(4)}
+$$
+
+From (3):
+$$
+y = 200 - x \quad \text{(5)}
+$$
+
+Substitute (5) into (4):
+$$
+5x - 4(200 - x) = 120
+$$
+$$
+5x - 800 + 4x = 120
+$$
+$$
+9x = 920
+$$
+$$
+x = 102.22 \quad (\text{approx.})
+$$
+
+Substitute $x = 102.22$ into (5):
+$$
+y = 200 - 102.22 = 97.78
+$$
+
+**Step 4:?** Compute the Minimized Cost
+
+Substitute $x = 102.22$ and $y = 97.78$ into $C(x, y)$:
+$$
+C(102.22, 97.78) = \frac{1}{8}(102.22)^2 + \frac{1}{10}(97.78)^2 + 12(102.22) + 18(97.78) + 1500
+$$
+$$
+C(102.22, 97.78) = 1308.89 + 956.86 + 1226.64 + 1760.04 + 1500 = 6752.43
+$$
+
+**Results:**
+
+**Optimal production levels:** 
+- New York: $x = 102.22$ units 
+- Chicago: $y = 97.78$ units
+
+**Minimized total cost:** \$6752.43
+
+**Discussion**
+
+The cost-minimization strategy ensures that production is distributed efficiently between the two plants to achieve the lowest possible total cost. Producing approximately equal quantities in each plant reduces the impact of the higher per-unit costs associated with one plant overproducing. 
+
+Practical considerations include:
+
+1. **Capacity Constraints:** The plants must have the capacity to produce these quantities.
+
+2. **Logistics Costs:** Transportation and storage costs may influence the allocation further.
+
+3. **Demand Variability:** If demand shifts geographically, the optimal distribution may need to be recalculated.
+
+Regularly revisiting the cost function and constraints is critical to maintaining efficiency as production conditions change.
+
+***
+
+### **Question 4 Marketing Mix:**
+
+**Scenario:** A company is launching a marketing campaign that involves spending on online ads $(x)$ and television ads $(y)$. The effectiveness of the campaign, measured in customer reach, is modeled by the function:
+
+$$E(x, y) = 500x + 700y - 5x^2 - 10xy - 8y^2$$
+
+Where:
+
+- $x$ is the amount spent on online ads (in thousands of dollars).
+- $y$ is the amount spent on television ads (in thousands of dollars).
+- $E(x, y)$ is the estimated customer reach.
+
+**Task:**
+
+1. Find the spending levels for online and television ads that maximize customer reach.
+2. Identify any saddle points and discuss how they could affect the marketing strategy.
+
+
+*Discussion:** Explain how the results can be used to allocate the marketing budget effectively and what the company should consider if it encounters saddle points in the optimization.
+
+**Solution**
+
+**Step 1:** Compute the First Partial Derivatives
+
+The first partial derivatives of $E(x, y)$ are:
+$$
+\frac{\partial E}{\partial x} = 500 - 10x - 10y
+$$
+$$
+\frac{\partial E}{\partial y} = 700 - 10x - 16y
+$$
+**Step 2:** Solve for Critical Points
+
+Set the first partial derivatives to zero:
+$$
+500 - 10x - 10y = 0 \quad \text{(1)}
+$$
+$$
+700 - 10x - 16y = 0 \quad \text{(2)}
+$$
+
+From (1):
+$$
+10x + 10y = 500 \quad \Rightarrow \quad x + y = 50 \quad \text{(3)}
+$$
+
+From (2):
+$$
+10x + 16y = 700 \quad \Rightarrow \quad x + 1.6y = 70 \quad \text{(4)}
+$$
+
+Solve the system of equations (3) and (4):
+$$
+x + y = 50
+$$
+$$
+x + 1.6y = 70
+$$
+
+Subtract (3) from (4):
+$$
+0.6y = 20 \quad \Rightarrow \quad y = 33.33
+$$
+
+Substitute $y = 33.33$ into (3):
+$$
+x + 33.33 = 50 \quad \Rightarrow \quad x = 16.67
+$$
+
+Step 3: Compute the Second Partial Derivatives
+
+The second partial derivatives are:
+$$
+\frac{\partial^2 E}{\partial x^2} = -10, \quad \frac{\partial^2 E}{\partial y^2} = -16, \quad \frac{\partial^2 E}{\partial x \partial y} = -10
+$$
+
+The Hessian determinant is:
+$$
+H = \frac{\partial^2 E}{\partial x^2} \cdot \frac{\partial^2 E}{\partial y^2} - \left( \frac{\partial^2 E}{\partial x \partial y} \right)^2
+$$
+$$
+H = (-10)(-16) - (-10)^2 = 160 - 100 = 60
+$$
+
+Since $H > 0$ and $\frac{\partial^2 E}{\partial x^2} < 0$, the critical point $(x, y) = (16.67, \ 33.33)$ is a local maximum.
+
+
+#### Step 4: Evaluate the Maximum Customer Reach
+
+Substitute $x = 16.67$ and $y = 33.33$ into $E(x, y)$:
+$$
+E(16.67, 33.33) = 500(16.67) + 700(33.33) - 5(16.67)^2 - 10(16.67)(33.33) - 8(33.33)^2
+$$
+$$
+E(16.67, 33.33) = 8333.5 + 23331 - 1388.89 - 5555.67 - 8888.89 = 15831.05
+$$
+
+
+**Results**
+
+**Optimal spending levels:**
+  - Online ads ($x$): \$16,670
+  - Television ads ($y$): \$33,330
+  
+**Maximum customer reach:** 15,831 customers
+
+**Saddle points:** None identified.
+
+
+**Discussion**
+
+The results indicate that the company should allocate \$16,670 to online ads and \$33,330 to television ads to maximize customer reach at 15,831 customers. The absence of saddle points simplifies decision-making, ensuring stability in this allocation.
+
+**Practical Considerations:**
+
+1. **Budget Constraints:** Ensure that the marketing budget aligns with the suggested spending levels.
+
+2. **Market Dynamics:** Monitor changes in the effectiveness of online and television ads to adjust the strategy dynamically.
+
+3. **Diminishing Returns:** Consider the potential impact of saturation in customer reach, especially if spending significantly increases in one category.
+
+This approach allows the company to optimize resource allocation for maximum effectiveness while remaining agile to market changes.
+
+---
